@@ -99,6 +99,13 @@ def query(building, room,Synjones_Auth):
         response = requests.post('https://mcard.sdu.edu.cn/charge/feeitem/getThirdData', headers=HEADERS, data=data)
         response.raise_for_status()
         return json.loads(response.text)['map']['showData']['信息'][8:]
+    except requests.exceptions.HTTPError as e:
+        if response.status_code == 401:
+            print(f"认证失败: {e}")
+            return "AUTH_FAILED"
+        else:
+            print(f"HTTP错误: {e}")
+            return None
     except Exception as e:
-        print(e)
+        print(f"其他错误: {e}")
         return None

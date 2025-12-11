@@ -29,7 +29,7 @@ def send_serverchan(title, desp, sendkey):
         print(f"推送失败: {e}")
         return None
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='Process some inputs.')
     parser.add_argument('--sendkey', required=True, help='Server酱SendKey')
     parser.add_argument('--Synjones_Auth', required=True, help='Synjones_Auth')
@@ -37,11 +37,31 @@ if __name__ == "__main__":
     
     sendkey = args.sendkey
     Synjones_Auth = args.Synjones_Auth
-    print(f"SendKey: {sendkey[:10]}...")  # 只显示部分SendKey
+    print(f"SendKey: {sendkey[:5]}...")  # 只显示部分SendKey
 
-    title = "宿舍电量提醒"
     last = query("S2", "b429", Synjones_Auth=Synjones_Auth)
     print(f"Query result: {last}")  # 添加调试信息
+
+    # 检查认证是否失效
+    if last == "AUTH_FAILED":
+        title = "⚠️ 认证失效提醒"
+        desp = """**Synjones-Auth 认证已失效！**
+
+认证信息已过期（401 Unauthorized）。
+
+请按以下步骤更新认证信息：
+1. 重新进行抓包获取新的 Synjones-Auth
+2. 在 GitHub 仓库的 Settings → Secrets 中更新 SYNJONES_AUTH
+
+---
+*本消息由宿舍电量监控系统自动发送*"""
+        send_serverchan(title, desp, sendkey)
+        print("已发送认证失效提醒")
+        return
+    
+    if last is None:
+        print("查询失败，跳过本次检查")
+        return
 
     try:
         # 从返回结果中提取数字（支持格式：'：16.00度' 或 '16.00'）
@@ -52,6 +72,7 @@ if __name__ == "__main__":
             raise ValueError(f"无法从结果中提取数字: {last}")
         
         # 使用Markdown格式的消息内容
+        title = "宿舍电量提醒"
         desp = f"""**您好！**
 
 您的宿舍电量不足，仅剩 **{last_value}** 度，请及时充值。
@@ -65,3 +86,6 @@ if __name__ == "__main__":
             print(f"电量充足（{last_value}度），无需发送提醒")
     except ValueError as e:
         print(f"Error converting query result to float: {e}")
+
+if __name__ == "__main__":
+    main()
