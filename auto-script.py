@@ -3,12 +3,24 @@ import requests
 import re
 from QueryScript import query
 
+DEFAULT_LOW_POWER_THRESHOLD = 20.0
+
 
 def parse_bark_keys(raw_keys):
     """
     解析 Bark API Key，支持逗号、空格、换行分隔多个 key。
     """
     return [key for key in re.split(r'[\s,]+', raw_keys.strip()) if key]
+
+
+def parse_threshold(raw_threshold):
+    """
+    解析低电量提醒阈值。未传入或传入空字符串时使用默认值。
+    """
+    if raw_threshold is None or not raw_threshold.strip():
+        return DEFAULT_LOW_POWER_THRESHOLD
+
+    return float(raw_threshold)
 
 
 def send_bark(title, desp, bark_keys):
@@ -46,6 +58,7 @@ def send_bark(title, desp, bark_keys):
 def main():
     parser = argparse.ArgumentParser(description='Process some inputs.')
     parser.add_argument('--bark-keys', required=True, help='Bark API Key，多个 key 可用逗号、空格或换行分隔')
+    parser.add_argument('--threshold', default=None, help=f'低电量提醒阈值，默认 {DEFAULT_LOW_POWER_THRESHOLD:g} 度')
     parser.add_argument('--Synjones_Auth', required=True, help='Synjones_Auth')
     args = parser.parse_args()
     
@@ -53,8 +66,14 @@ def main():
     if not bark_keys:
         parser.error('--bark-keys 不能为空')
 
+    try:
+        low_power_threshold = parse_threshold(args.threshold)
+    except ValueError:
+        parser.error('--threshold 必须是数字')
+
     Synjones_Auth = args.Synjones_Auth
     print(f"Bark API Key 数量: {len(bark_keys)}")
+    print(f"低电量提醒阈值: {low_power_threshold:g} 度")
 
     last = query("S2", "b429", Synjones_Auth=Synjones_Auth)
     print(f"Query result: {last}")  # 添加调试信息
@@ -114,7 +133,7 @@ def main():
 ---
 *本消息由宿舍电量监控系统自动发送*"""
         
-        if last_value < 20: #last_value 为宿舍剩余电量，低于20度时发送推送提醒，可根据实际情况修改
+        if last_value < low_power_threshold:
             send_bark(title, desp, bark_keys)
         else:
             print(f"电量充足（{last_value}度），无需发送提醒")

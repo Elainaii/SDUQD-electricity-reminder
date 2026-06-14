@@ -49,12 +49,12 @@
    
    - `BARK_KEYS`: 你的 Bark API Key，多个 key 可用英文逗号、空格或换行分隔
    - `SYNJONES_AUTH`: 抓包获取的 Synjones-Auth 字段
+   - `POWER_THRESHOLD`: 低电量提醒阈值，可选；不配置时默认 `20`
 
 3. **修改配置**（可选）
    
    编辑 `auto-script.py` 中的以下参数：
    - `last = query(...)`：修改楼栋和房间号
-   - `if last_value < 20`：修改电量阈值
 
 4. **启用 Actions**
    
@@ -68,7 +68,7 @@
    ```
 2. **运行脚本**
    ```bash
-   python auto-script.py --bark-keys "你的BarkKey1,你的BarkKey2" --Synjones_Auth "你的认证信息"
+   python auto-script.py --bark-keys "你的BarkKey1,你的BarkKey2" --threshold 20 --Synjones_Auth "你的认证信息"
    ```
 
 ## 配置说明
@@ -84,11 +84,13 @@ schedule:
 
 ### 修改电量阈值
 
-编辑 `auto-script.py` 中的阈值判断：
+在 GitHub Secrets 中添加或修改 `POWER_THRESHOLD`，例如：
 
-```python
-if last_value < 10:  # 修改此处的数值，当电量低于该值时发送提醒
+```text
+20
 ```
+
+如果没有配置 `POWER_THRESHOLD`，脚本默认使用 `20` 度作为提醒阈值。本地运行时也可以通过 `--threshold 20` 指定。
 
 ### 修改楼栋房间号
 
