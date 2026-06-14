@@ -1,20 +1,20 @@
 # 山东大学青岛校区宿舍电量查询与提醒
 
-> Fork 自[原项目](https://github.com/Dregen-Yor/SDU-QD-Electricity-Query-Script)，修改为使用 Server酱 进行微信推送提醒
+> Fork 自[原项目](https://github.com/Dregen-Yor/SDU-QD-Electricity-Query-Script)，修改为使用 Bark 进行推送提醒
 
 ## 项目简介
 
 基于山大V卡通2.0版本的宿舍电量查询脚本，无需登录即可查询宿舍当前电费余量。
 
-本项目使用 **Server酱** 进行微信推送，配合 **GitHub Actions** 实现自动定时检测并提醒，当宿舍电量低于设定阈值时会自动推送消息到微信。
+本项目使用 **Bark** 进行推送，配合 **GitHub Actions** 实现自动定时检测并提醒，当宿舍电量低于设定阈值时会自动推送消息到 iPhone。
 
 ## 功能特点
 
 - ✅ 自动查询宿舍电量
-- ✅ 低电量自动微信推送提醒（通过 Server酱）
+- ✅ 低电量自动推送提醒（通过 Bark）
+- ✅ 支持多个 Bark API Key 同时推送
 - ✅ GitHub Actions 定时任务，无需本地运行
 - ✅ 支持自定义电量阈值
-- ✅ Markdown 格式消息，美观易读
 
 ## 支持楼栋
 
@@ -31,11 +31,11 @@
 
 **注意：** 网页端重新登录后字段会失效，推荐使用网页端抓包后不再登录网页版V卡通。
 
-### 2. 获取 Server酱 SendKey
+### 2. 获取 Bark API Key
 
-1. 访问 [Server酱官网](https://sct.ftqq.com/)
-2绑定微信（用于接收推送消息）
-3在控制台获取你的 `SendKey`
+1. 在 iPhone 上安装 Bark
+2. 打开 Bark，复制服务地址中的 API Key
+3. 如果要推送到多个设备，准备多个 API Key，用英文逗号、空格或换行分隔
 
 ## 使用方法
 
@@ -47,14 +47,14 @@
    
    在仓库的 `Settings` → `Secrets and variables` → `Actions` 中添加以下密钥：
    
-   - `SENDKEY`: 你的 Server酱 SendKey
+   - `BARK_KEYS`: 你的 Bark API Key，多个 key 可用英文逗号、空格或换行分隔
    - `SYNJONES_AUTH`: 抓包获取的 Synjones-Auth 字段
 
 3. **修改配置**（可选）
    
    编辑 `auto-script.py` 中的以下参数：
-   - 第 40 行：修改楼栋和房间号
-   - 第 50 行：修改电量阈值
+   - `last = query(...)`：修改楼栋和房间号
+   - `if last_value < 20`：修改电量阈值
 
 4. **启用 Actions**
    
@@ -68,7 +68,7 @@
    ```
 2. **运行脚本**
    ```bash
-   python auto-script.py --sendkey "你的SendKey" --Synjones_Auth "你的认证信息"
+   python auto-script.py --bark-keys "你的BarkKey1,你的BarkKey2" --Synjones_Auth "你的认证信息"
    ```
 
 ## 配置说明
@@ -84,7 +84,7 @@ schedule:
 
 ### 修改电量阈值
 
-编辑 `auto-script.py` 第 50 行：
+编辑 `auto-script.py` 中的阈值判断：
 
 ```python
 if last_value < 10:  # 修改此处的数值，当电量低于该值时发送提醒
@@ -92,7 +92,7 @@ if last_value < 10:  # 修改此处的数值，当电量低于该值时发送提
 
 ### 修改楼栋房间号
 
-编辑 `auto-script.py` 第 40 行：
+编辑 `auto-script.py` 中的查询参数：
 
 ```python
 last = query("S1", "a114", Synjones_Auth=Synjones_Auth)  # 修改楼栋和房间号
@@ -107,7 +107,7 @@ last = query("S1", "a114", Synjones_Auth=Synjones_Auth)  # 修改楼栋和房间
 ## 隐私声明
 
 - 所有认证信息存储在 GitHub Secrets 中，安全加密
-- 推送服务使用 Server酱，仅推送到你绑定的微信
+- 推送服务使用 Bark，仅推送到你配置的设备
 - 不会保存或上传任何其他用户数据
 
 ## 致谢

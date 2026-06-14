@@ -3,41 +3,58 @@ import requests
 import re
 from QueryScript import query
 
-def send_serverchan(title, desp, sendkey):
+
+def parse_bark_keys(raw_keys):
     """
-    使用Server酱发送推送通知
+    解析 Bark API Key，支持逗号、空格、换行分隔多个 key。
+    """
+    return [key for key in re.split(r'[\s,]+', raw_keys.strip()) if key]
+
+
+def send_bark(title, desp, bark_keys):
+    """
+    使用 Bark 发送推送通知
     :param title: 消息标题
-    :param desp: 消息内容（支持Markdown）
-    :param sendkey: Server酱的SendKey
+    :param desp: 消息内容
+    :param bark_keys: Bark API Key 列表
     :return: 推送结果
     """
-    url = f"https://sctapi.ftqq.com/{sendkey}.send"
-    
-    # 使用POST请求发送，避免GET请求的长度限制
-    data = {
-        "title": title,
-        "desp": desp
-    }
-    
-    try:
-        response = requests.post(url, data=data)
-        response.raise_for_status()
-        result = response.json()
-        print(f"推送结果: {result}")
-        return result
-    except requests.exceptions.RequestException as e:
-        print(f"推送失败: {e}")
-        return None
+    results = []
+
+    for bark_key in bark_keys:
+        url = "https://api.day.app/push"
+        data = {
+            "device_key": bark_key,
+            "title": title,
+            "body": desp,
+            "group": "宿舍电量监控",
+            "isArchive": 1,
+        }
+
+        try:
+            response = requests.post(url, json=data, timeout=15)
+            response.raise_for_status()
+            result = response.json()
+            print(f"Bark 推送结果({bark_key[:5]}...): {result}")
+            results.append(result)
+        except requests.exceptions.RequestException as e:
+            print(f"Bark 推送失败({bark_key[:5]}...): {e}")
+            results.append(None)
+
+    return results
 
 def main():
     parser = argparse.ArgumentParser(description='Process some inputs.')
-    parser.add_argument('--sendkey', required=True, help='Server酱SendKey')
+    parser.add_argument('--bark-keys', required=True, help='Bark API Key，多个 key 可用逗号、空格或换行分隔')
     parser.add_argument('--Synjones_Auth', required=True, help='Synjones_Auth')
     args = parser.parse_args()
     
-    sendkey = args.sendkey
+    bark_keys = parse_bark_keys(args.bark_keys)
+    if not bark_keys:
+        parser.error('--bark-keys 不能为空')
+
     Synjones_Auth = args.Synjones_Auth
-    print(f"SendKey: {sendkey[:5]}...")  # 只显示部分SendKey
+    print(f"Bark API Key 数量: {len(bark_keys)}")
 
     last = query("S2", "b429", Synjones_Auth=Synjones_Auth)
     print(f"Query result: {last}")  # 添加调试信息
@@ -55,7 +72,7 @@ def main():
 
 ---
 *本消息由宿舍电量监控系统自动发送*"""
-        send_serverchan(title, desp, sendkey)
+        send_bark(title, desp, bark_keys)
         print("已发送认证失效提醒")
         return
     
@@ -76,7 +93,7 @@ def main():
 
 ---
 *本消息由宿舍电量监控系统自动发送*"""
-        send_serverchan(title, desp, sendkey)
+        send_bark(title, desp, bark_keys)
         print("查询失败，已发送脚本失效提醒")
         return
 
@@ -98,7 +115,7 @@ def main():
 *本消息由宿舍电量监控系统自动发送*"""
         
         if last_value < 20: #last_value 为宿舍剩余电量，低于20度时发送推送提醒，可根据实际情况修改
-            send_serverchan(title, desp, sendkey)
+            send_bark(title, desp, bark_keys)
         else:
             print(f"电量充足（{last_value}度），无需发送提醒")
     except ValueError as e:
