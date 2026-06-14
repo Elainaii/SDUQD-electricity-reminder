@@ -81,37 +81,14 @@ def main():
     # 检查认证是否失效
     if last == "AUTH_FAILED":
         title = "⚠️ 认证失效提醒"
-        desp = """**Synjones-Auth 认证已失效！**
-
-认证信息已过期（401 Unauthorized）。
-
-请按以下步骤更新认证信息：
-1. 重新进行抓包获取新的 Synjones-Auth
-2. 在 GitHub 仓库的 Settings → Secrets 中更新 SYNJONES_AUTH
-
----
-*本消息由宿舍电量监控系统自动发送*"""
+        desp = "Synjones-Auth 已失效，请重新抓包并更新 GitHub Secret: SYNJONES_AUTH。"
         send_bark(title, desp, bark_keys)
         print("已发送认证失效提醒")
         return
     
     if last is None:
         title = "❌ 脚本查询失败"
-        desp = """**电量查询脚本执行失败！**
-
-系统在查询宿舍电量时遇到错误，可能的原因：
-- 网络连接问题
-- 山大服务器异常
-- 请求参数错误
-- 其他未知错误
-
-建议：
-1. 检查 GitHub Actions 运行日志查看具体错误信息
-2. 如果持续失败，可能需要检查脚本是否需要更新
-3. 确认山大V卡通系统是否正常运行
-
----
-*本消息由宿舍电量监控系统自动发送*"""
+        desp = "宿舍电量查询失败，请检查 GitHub Actions 日志或山大V卡通服务状态。"
         send_bark(title, desp, bark_keys)
         print("查询失败，已发送脚本失效提醒")
         return
@@ -124,14 +101,8 @@ def main():
         else:
             raise ValueError(f"无法从结果中提取数字: {last}")
         
-        # 使用Markdown格式的消息内容
         title = "宿舍电量提醒"
-        desp = f"""**您好！**
-
-您的宿舍电量不足，仅剩 **{last_value}** 度，请及时充值。
-
----
-*本消息由宿舍电量监控系统自动发送*"""
+        desp = f"宿舍剩余电量 {last_value:g} 度，低于阈值 {low_power_threshold:g} 度，请及时充值。"
         
         if last_value < low_power_threshold:
             send_bark(title, desp, bark_keys)
